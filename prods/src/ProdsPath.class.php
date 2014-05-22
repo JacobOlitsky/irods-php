@@ -38,6 +38,9 @@ abstract class ProdsPath
      */
     public function __construct(RODSAccount &$account, $path_str)
     {
+        if (!isset($account) || !isset($path_str)) {
+            throw new RODSException('', 'SYS_INTERNAL_NULL_INPUT_ERR');
+        }
         $this->account = $account;
 
         // strip the tailing "/"
@@ -66,10 +69,9 @@ abstract class ProdsPath
      */
     public function exists()
     {
-        if (isset($this->path_exists))
+        if (isset($this->path_exists)) {
             return $this->path_exists;
-
-        else {
+        } else {
             $this->verify();
             return $this->path_exists;
         }
@@ -88,14 +90,13 @@ abstract class ProdsPath
     public function getMeta($get_cb = array('RODSConnManager', 'getConn'),
                             $rel_cb = array('RODSConnManager', 'releaseConn'))
     {
-        if ($this instanceof ProdsFile)
+        if ($this instanceof ProdsFile) {
             $type = 'd';
-        else
-            if ($this instanceof ProdsDir)
-                $type = 'c';
-            else
-                throw new RODSException("Unsupported data type:" . get_class($this),
-                    "PERR_INTERNAL_ERR");
+        } elseif ($this instanceof ProdsDir) {
+            $type = 'c';
+        } else {
+            throw new RODSException("Unsupported data type:" . get_class($this), "PERR_INTERNAL_ERR");
+        }
         //$conn = RODSConnManager::getConn($this->account);
         $conn = call_user_func_array($get_cb, array(&$this->account));
         $meta_array = $conn->getMeta($type, $this->path_str);
@@ -121,15 +122,13 @@ abstract class ProdsPath
                             $get_cb = array('RODSConnManager', 'getConn'),
                             $rel_cb = array('RODSConnManager', 'releaseConn'))
     {
-        if ($this instanceof ProdsFile)
+        if ($this instanceof ProdsFile) {
             $type = 'd';
-        else
-            if ($this instanceof ProdsDir)
-                $type = 'c';
-            else
-                throw new RODSException("Unsupported data type:" . get_class($this),
-                    "PERR_INTERNAL_ERR");
-
+        } elseif ($this instanceof ProdsDir) {
+            $type = 'c';
+        } else {
+            throw new RODSException('Unsupported data type:' . get_class($this), 'PERR_INTERNAL_ERR');
+        }
         //$conn = RODSConnManager::getConn($this->account);
         $conn = call_user_func_array($get_cb, array(&$this->account));
         $conn->addMeta($type, $this->path_str, $meta);
@@ -145,15 +144,13 @@ abstract class ProdsPath
                            $get_cb = array('RODSConnManager', 'getConn'),
                            $rel_cb = array('RODSConnManager', 'releaseConn'))
     {
-        if ($this instanceof ProdsFile)
+        if ($this instanceof ProdsFile) {
             $type = 'd';
-        else
-            if ($this instanceof ProdsDir)
-                $type = 'c';
-            else
-                throw new RODSException("Unsupported data type:" . get_class($this),
-                    "PERR_INTERNAL_ERR");
-
+        } elseif ($this instanceof ProdsDir) {
+            $type = 'c';
+        } else {
+            throw new RODSException("Unsupported data type:" . get_class($this), "PERR_INTERNAL_ERR");
+        }
         //$conn = RODSConnManager::getConn($this->account);
         $conn = call_user_func_array($get_cb, array(&$this->account));
         $conn->rmMeta($type, $this->path_str, $meta);
@@ -170,15 +167,13 @@ abstract class ProdsPath
                                $get_cb = array('RODSConnManager', 'getConn'),
                                $rel_cb = array('RODSConnManager', 'releaseConn'))
     {
-        if ($this instanceof ProdsFile)
+        if ($this instanceof ProdsFile) {
             $type = 'd';
-        else
-            if ($this instanceof ProdsDir)
-                $type = 'c';
-            else
-                throw new RODSException("Unsupported data type:" . get_class($this),
-                    "PERR_INTERNAL_ERR");
-
+        } elseif ($this instanceof ProdsDir) {
+            $type = 'c';
+        } else {
+            throw new RODSException("Unsupported data type:" . get_class($this), "PERR_INTERNAL_ERR");
+        }
         //$conn = RODSConnManager::getConn($this->account);
         $conn = call_user_func_array($get_cb, array(&$this->account));
         $conn->rmMetaByID($type, $this->path_str, $metaid);
@@ -194,24 +189,20 @@ abstract class ProdsPath
                            $get_cb = array('RODSConnManager', 'getConn'),
                            $rel_cb = array('RODSConnManager', 'releaseConn'))
     {
-        if ($this instanceof ProdsFile)
+        if ($this instanceof ProdsFile) {
             $type_src = 'd';
-        else
-            if ($this instanceof ProdsDir)
+        } elseif ($this instanceof ProdsDir) {
                 $type_src = 'c';
-            else
-                throw new RODSException("Unsupported data type:" . get_class($this),
-                    "PERR_INTERNAL_ERR");
-
-        if ($dest instanceof ProdsFile)
+        } else {
+            throw new RODSException("Unsupported data type:" . get_class($this), "PERR_INTERNAL_ERR");
+        }
+        if ($dest instanceof ProdsFile) {
             $type_dest = 'd';
-        else
-            if ($dest instanceof ProdsDir)
-                $type_dest = 'c';
-            else
-                throw new RODSException("Unsupported data type:" . get_class($this),
-                    "PERR_INTERNAL_ERR");
-
+        } elseif ($dest instanceof ProdsDir) {
+            $type_dest = 'c';
+        } else {
+            throw new RODSException("Unsupported data type:" . get_class($this), "PERR_INTERNAL_ERR");
+        }
         //$conn = RODSConnManager::getConn($this->account);
         $conn = call_user_func_array($get_cb, array(&$this->account));
         $conn->cpMeta($type_src, $type_dest, $this->path_str, $dest->path_str);
@@ -228,10 +219,11 @@ abstract class ProdsPath
                            $get_cb = array('RODSConnManager', 'getConn'),
                            $rel_cb = array('RODSConnManager', 'releaseConn'))
     {
-        if ($this instanceof ProdsFile)
+        if ($this instanceof ProdsFile) {
             $type = 0;
-        else
+        } else {
             $type = 1;
+        }
         //$conn = RODSConnManager::getConn($this->account);
         $conn = call_user_func_array($get_cb, array(&$this->account));
         $conn->rename($this->path_str, $new_path_str, $type);

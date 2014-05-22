@@ -42,7 +42,7 @@ class ProdsDir extends ProdsPath
             }
         }
     }
-  
+
 
  /**
 	* Create a ProdsDir object from URI string.
@@ -181,7 +181,7 @@ class ProdsDir extends ProdsPath
         $terms = array("descendantOnly" => true, "recursive" => false);
         return $this->findDirs($terms, $total_num_rows, $startingInx, $maxresults, $orderby);
     }
-    
+
     /**
      * Make a new directory under this directory
      * @param string $name full path of the new dir to be made on server
@@ -237,8 +237,9 @@ class ProdsDir extends ProdsPath
                              $get_cb = array('RODSConnManager', 'getConn'),
                              $rel_cb = array('RODSConnManager', 'releaseConn'))
     {
-        if (($force_reload === false) && ($this->stats))
+        if (($force_reload === false) && ($this->stats)){
             return $this->stats;
+        }
 
         //$conn = RODSConnManager::getConn($this->account);
         $conn = call_user_func_array($get_cb, array(&$this->account));
@@ -246,11 +247,14 @@ class ProdsDir extends ProdsPath
         //RODSConnManager::releaseConn($conn);
         call_user_func($rel_cb, $conn);
 
-        if ($stats === false) $this->stats = NULL;
-        else $this->stats = $stats;
+        if ($stats === false) {
+            $this->stats = NULL;
+        } else {
+            $this->stats = $stats;
+        }
         return $this->stats;
     }
-    
+
     public function getACL()
     {
 
@@ -260,28 +264,28 @@ class ProdsDir extends ProdsPath
         $que_result_coll = $connLocal->genQuery(
             array("COL_COLL_INHERITANCE", "COL_COLL_NAME", "COL_COLL_OWNER_NAME", "COL_COLL_ID"),
             array(new RODSQueryCondition("COL_COLL_NAME", $collection)));
-        
+
         $users['COL_COLL_INHERITANCE'] = (int)($que_result_coll['COL_COLL_INHERITANCE'][0]);
 
         $que_result_users = $connLocal->genQuery(
             array("COL_DATA_ACCESS_NAME", "COL_DATA_ACCESS_USER_ID"),
             array(new RODSQueryCondition("COL_DATA_ACCESS_DATA_ID", $que_result_coll['COL_COLL_ID'][0])));
-        
+
         for($i=0; $i<sizeof($que_result_users["COL_DATA_ACCESS_USER_ID"]);$i++) {
             $que_result_user_info = $connLocal->genQuery(
                 array("COL_USER_NAME", "COL_USER_ZONE"),
                 array(new RODSQueryCondition("COL_USER_ID", $que_result_users["COL_DATA_ACCESS_USER_ID"][$i])));
-            
+
             $users['COL_USERS'][] = (object) array(
                 "COL_USER_NAME" => $que_result_user_info['COL_USER_NAME'][0],
                 "COL_USER_ZONE" => $que_result_user_info['COL_USER_ZONE'][0],
                 "COL_DATA_ACCESS_NAME" => $que_result_users['COL_DATA_ACCESS_NAME'][$i]
             );
         }
-        
+
         RODSConnManager::releaseConn($connLocal);
         return $users;
-        
+
 
     }
 
@@ -305,19 +309,21 @@ class ProdsDir extends ProdsPath
             case 'num_dirs' :
                 $select->add('COL_COLL_ID', 'count');
                 $ret_data_index = 'COL_COLL_ID';
-                if ($recursive === true)
+                if ($recursive === true){
                     $condition->add('COL_COLL_NAME', 'like', $this->path_str . '/%');
-                else
+                } else {
                     $condition->add('COL_COLL_PARENT_NAME', '=', $this->path_str);
+                }
                 break;
             case 'num_files' :
                 $select->add('COL_D_DATA_ID', 'count');
                 $ret_data_index = 'COL_D_DATA_ID';
-                if ($recursive === true)
+                if ($recursive === true) {
                     $condition->add('COL_COLL_NAME', 'like', $this->path_str . '/%',
                         array(array('op' => '=', 'val' => $this->path_str)));
-                else
+                } else {
                     $condition->add('COL_COLL_NAME', '=', $this->path_str);
+                }
                 break;
             default :
                 throw new RODSException("Query field '$fld' not supported!",
@@ -331,9 +337,9 @@ class ProdsDir extends ProdsPath
         call_user_func($rel_cb, $conn);
         $result_values = $results->getValues();
 
-        if (isset($result_values[$ret_data_index][0]))
+        if (isset($result_values[$ret_data_index][0])) {
             return intval($result_values[$ret_data_index][0]);
-        else {
+        } else {
             throw new RODSException("Query did not get value back with expected " .
                 "index: $ret_data_index!", 'GENERAL_PRODS_ERR');
         }
@@ -381,17 +387,19 @@ class ProdsDir extends ProdsPath
         foreach ($sort_flds as $sort_fld_key => $sort_fld_val) {
             switch ($sort_fld_key) {
                 case 'name':
-                    if ($sort_fld_val === false)
+                    if ($sort_fld_val === false) {
                         $flds['COL_DATA_NAME'] = 'order_by_desc';
-                    else
+                    } else {
                         $flds['COL_DATA_NAME'] = 'order_by_asc';
+                    }
                     break;
 
                 case 'size':
-                    if ($sort_fld_val === false)
+                    if ($sort_fld_val === false) {
                         $flds['COL_DATA_SIZE'] = 'order_by_desc';
-                    else
+                    } else {
                         $flds['COL_DATA_SIZE'] = 'order_by_asc';
+                    }
                     break;
 
                 case 'mtime':

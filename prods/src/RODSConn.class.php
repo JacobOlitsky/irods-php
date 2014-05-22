@@ -11,29 +11,34 @@ require_once("autoload.inc.php");
 require_once("RodsAPINum.inc.php");
 require_once("RodsConst.inc.php");
 
-if (!defined("O_RDONLY")) define ("O_RDONLY", 0);
-if (!defined("O_WRONLY")) define ("O_WRONLY", 1);
-if (!defined("O_RDWR")) define ("O_RDWR", 2);
-if (!defined("O_TRUNC")) define ("O_TRUNC", 512);
+if (!defined("O_RDONLY")) {
+    define ("O_RDONLY", 0);
+}
+if (!defined("O_WRONLY")) {
+    define ("O_WRONLY", 1);
+}
+if (!defined("O_RDWR")) {
+    define ("O_RDWR", 2);
+}
+if (!defined("O_TRUNC")) {
+    define ("O_TRUNC", 512);
+}
 
 class RODSConn
 {
   private $conn;     // (resource) socket connection to RODS server
-  
-  private $account;  // RODS user account  
-  
+  private $account;  // RODS user account
   private $idle;
   private $id;
-  
   public  $connected;
-  
+
   /**
-   * Makes a new connection to RODS server, with supplied user information (name, passwd etc.) 
-   * @param string $host hostname 
-   * @param string $port port number 
-   * @param string $user username 
-   * @param string $pass passwd 
-   * @param string $zone zonename 
+   * Makes a new connection to RODS server, with supplied user information (name, passwd etc.)
+   * @param string $host hostname
+   * @param string $port port number
+   * @param string $user username
+   * @param string $pass passwd
+   * @param string $zone zonename
    */
   public function __construct(RODSAccount &$account)
   {
@@ -42,53 +47,54 @@ class RODSConn
     $this->conn=NULL;
     $this->idle=true;
   }
-  
+
   public function __destruct()
   {
-    if ($this->connected===true)
+    if ($this->connected===true) {
       $this->disconnect();
+    }
   }
-  
+
   public function equals(RODSConn $other)
   {
     return $this->account->equals($other->account);
   }
-  
+
   public function getSignature()
   {
     return $this->account->getSignature();
   }
-  
+
   public function lock()
   {
     $this->idle=false;
   }
-  
+
   public function unlock()
   {
     $this->idle=true;
   }
-  
+
   public function isIdle()
   {
     return ($this->idle);
   }
-  
+
   public function getId()
   {
     return $this->id;
   }
-  
+
   public function setId($id)
   {
     $this->id=$id;
   }
-  
+
   public function getAccount()
   {
     return $this->account;
   }
-  
+
   public function connect()
   {
     $host=$this->account->host;
@@ -98,7 +104,7 @@ class RODSConn
     $zone=$this->account->zone;
     $auth_type = $this->account->auth_type;
 
-    // if we're going to use PAM, set up the socket context 
+    // if we're going to use PAM, set up the socket context
     // options for SSL connections when we open the connection
     if (strcasecmp($auth_type, "PAM") == 0) {
       $ssl_opts = array('ssl' => array());
@@ -129,15 +135,16 @@ class RODSConn
     else {
       $conn = @fsockopen($host, $port, $errno, $errstr);
     }
-    if (!$conn)
+    if (!$conn) {
       throw new RODSException("Connection to '$host:$port' failed.1: ($errno)$errstr. ",
         "SYS_SOCK_OPEN_ERR");
+    }
     $this->conn=$conn;
-    
+
     // connect to RODS server
     $msg=RODSMessage::packConnectMsg($user,$zone);
     fwrite($conn, $msg);
-    
+
     $msg=new RODSMessage();
     $intInfo=$msg->unpack($conn);
     if ($intInfo<0)
@@ -145,18 +152,18 @@ class RODSConn
       throw new RODSException("Connection to '$host:$port' failed.2. User: $user Zone: $zone",
         $GLOBALS['PRODS_ERR_CODES_REV']["$intInfo"]);
     }
-    
+
     // are we doing PAM authentication
-    if (strcasecmp($auth_type, "PAM") == 0) 
+    if (strcasecmp($auth_type, "PAM") == 0)
     {
       // Ask server to turn on SSL
       $req_packet = new RP_sslStartInp();
-      $msg=new RODSMessage("RODS_API_REQ_T", $req_packet, 
+      $msg=new RODSMessage("RODS_API_REQ_T", $req_packet,
         $GLOBALS['PRODS_API_NUMS']['SSL_START_AN']);
       fwrite($conn, $msg->pack());
       $msg=new RODSMessage();
       $intInfo=$msg->unpack($conn);
-      if ($intInfo<0) 
+      if ($intInfo<0)
       {
         throw new RODSException("Connection to '$host:$port' failed.ssl1. User: $user Zone: $zone",
           $GLOBALS['PRODS_ERR_CODES_REV']["$intInfo"]);
@@ -178,7 +185,7 @@ class RODSConn
         throw new RODSException("PAM auth failed at server '$host:$port' User: $user Zone: $zone",
           $GLOBALS['PRODS_ERR_CODES_REV']["$intInfo"]);
       }
-      
+
       // Update the account object with the temporary password
       // and set the auth_type to irods for this connection
       $pack = $msg->getBody();
@@ -186,12 +193,12 @@ class RODSConn
 
       // Done authentication ... turn ask the server to turn off SSL
       $req_packet = new RP_sslEndInp();
-      $msg=new RODSMessage("RODS_API_REQ_T", $req_packet, 
+      $msg=new RODSMessage("RODS_API_REQ_T", $req_packet,
         $GLOBALS['PRODS_API_NUMS']['SSL_END_AN']);
       fwrite($conn, $msg->pack());
       $msg=new RODSMessage();
       $intInfo=$msg->unpack($conn);
-      if ($intInfo<0) 
+      if ($intInfo<0)
       {
         throw new RODSException("Connection to '$host:$port' failed.ssl2. User: $user Zone: $zone",
           $GLOBALS['PRODS_ERR_CODES_REV']["$intInfo"]);
@@ -200,7 +207,7 @@ class RODSConn
       stream_socket_enable_crypto($conn, false);
 
       // nasty hack ... some characters are left over to be read
-      // from the socket after the SSL shutdown, and I can't 
+      // from the socket after the SSL shutdown, and I can't
       // figure out how to consume them via SSL routines, so I
       // just read them and throw them away. They need to be consumed
       // or later reads get out of sync with the API responses
@@ -211,12 +218,12 @@ class RODSConn
       }
 
     }
-      
+
     // request authentication
     $msg=new RODSMessage("RODS_API_REQ_T",NULL,
       $GLOBALS['PRODS_API_NUMS']['AUTH_REQUEST_AN']);
-    fwrite($conn, $msg->pack());    
-    
+    fwrite($conn, $msg->pack());
+
     // get chalange string
     $msg=new RODSMessage();
     $intInfo=$msg->unpack($conn);
@@ -228,7 +235,7 @@ class RODSConn
     $pack=$msg->getBody();
     $challenge_b64encoded=$pack->challenge;
     $challenge=base64_decode($challenge_b64encoded);
-    
+
     // encode chalange with passwd
     $pad_pass=str_pad($pass,MAX_PASSWORD_LEN,"\0");
     $pwmd5=md5($challenge.$pad_pass,true);
@@ -240,13 +247,13 @@ class RODSConn
       }
     }
     $response=base64_encode($pwmd5);
-    
+
     // set response
     $resp_packet=new RP_authResponseInp($response,$user);
     $msg=new RODSMessage("RODS_API_REQ_T",$resp_packet,
       $GLOBALS['PRODS_API_NUMS']['AUTH_RESPONSE_AN']);
     fwrite($conn, $msg->pack());
-    
+
     // check if we are connected
     // get chalange string
     $msg=new RODSMessage();
@@ -257,7 +264,7 @@ class RODSConn
       throw new RODSException("Connection to '$host:$port' failed.4 (login failed, possible wrong user/passwd). User: $user Pass: $pass Zone: $zone",
         $GLOBALS['PRODS_ERR_CODES_REV']["$intInfo"]);
     }
-    
+
     $this->connected=true;
     // use ticket if specified
         if( !empty($this->account->ticket) ) {
@@ -281,8 +288,9 @@ class RODSConn
      */
     public function disconnect($force = false)
     {
-        if (($this->connected === false) && ($force !== true))
+        if (($this->connected === false) && ($force !== true)) {
             return;
+        }
 
         $msg = new RODSMessage("RODS_DISCONNECT_T");
         fwrite($this->conn, $msg->pack());
@@ -300,8 +308,9 @@ class RODSConn
         {
             // create a 16 characters long ticket
             $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            for ($i = 0; $i < 16; $i++)
+            for ($i = 0; $i < 16; $i++) {
                 $ticket .= $chars[mt_rand(1, strlen($chars))-1];
+            }
         }
 
         $ticket_packet = new RP_ticketAdminInp('create', $ticket, $permission, $object);
@@ -349,9 +358,9 @@ class RODSConn
             throw new RODSException("getTempPassword needs an active connection, but the connection is currently inactive",
                 'PERR_CONN_NOT_ACTIVE');
         }
-        if (NULL == $key)
+        if (NULL == $key) {
             $key = $this->getKeyForTempPassword();
-
+        }
         $auth_str = str_pad($key . $this->account->pass, 100, "\0");
         $pwmd5 = bin2hex(md5($auth_str, true));
 
@@ -389,8 +398,9 @@ class RODSConn
      */
     public function getUserInfo($user = NULL)
     {
-        if (!isset($user))
+        if (!isset($user)){
             $user = $this->account->user;
+        }
 
         // set selected value
         $select_val = array("COL_USER_ID", "COL_USER_NAME", "COL_USER_TYPE",
@@ -470,8 +480,9 @@ class RODSConn
             $options["recursiveOpr"] = "";
         }
         foreach ($additional_flags as $flagkey => $flagval) {
-            if (!empty($flagkey))
+            if (!empty($flagkey)) {
                 $options[$flagkey] = $flagval;
+            }
         }
         $options_pk = new RP_KeyValPair();
         $options_pk->fromAssocArray($options);
@@ -491,15 +502,16 @@ class RODSConn
                         "lastObjPath" => $msg->getBody()->lastObjPath
                     )
                 );
-                if (false === $status)
+                if (false === $status) {
                     throw new Exception("status_update_func failed!");
-                else if (1 == $status) {
+                } elseif (1 == $status) {
                     return;
                 }
             }
 
-            if ($intInfo == 0) //stop here if intinfo =0 (process completed)
+            if ($intInfo == 0) {//stop here if intinfo =0 (process completed)
                 break;
+            }
             $this->replyStatusPacket();
             $msg = new RODSMessage();
             $intInfo = (int)$msg->unpack($this->conn);
@@ -572,17 +584,24 @@ class RODSConn
             $select_attr = array_fill(0, count($select_val), 1);
             foreach ($orderby as $key => $val) {
                 if ($key == "name") {
-                    if ($val == 0) $select_attr[0] = ORDER_BY;
-                    else $select_attr[0] = ORDER_BY_DESC;
-                } else
-                    if ($key == "owner") {
-                        if ($val == 0) $select_attr[2] = ORDER_BY;
-                        else $select_attr[2] = ORDER_BY_DESC;
-                    } else
-                        if ($key == "mtime") {
-                            if ($val == 0) $select_attr[5] = ORDER_BY;
-                            else $select_attr[5] = ORDER_BY_DESC;
-                        }
+                    if ($val == 0) {
+                        $select_attr[0] = ORDER_BY;
+                    } else {
+                        $select_attr[0] = ORDER_BY_DESC;
+                    }
+                } elseif ($key == "owner") {
+                    if ($val == 0) {
+                        $select_attr[2] = ORDER_BY;
+                    } else {
+                        $select_attr[2] = ORDER_BY_DESC;
+                    }
+                } elseif ($key == "mtime") {
+                    if ($val == 0) {
+                        $select_attr[5] = ORDER_BY;
+                    } else {
+                        $select_attr[5] = ORDER_BY_DESC;
+                    }
+                }
             }
         }
 
@@ -653,21 +672,30 @@ class RODSConn
             $select_attr = array_fill(0, count($select_val), 1);
             foreach ($orderby as $key => $val) {
                 if ($key == "name") {
-                    if ($val == 0) $select_attr[0] = ORDER_BY;
-                    else $select_attr[0] = ORDER_BY_DESC;
-                } else
-                    if ($key == "size") {
-                        if ($val == 0) $select_attr[4] = ORDER_BY;
-                        else $select_attr[4] = ORDER_BY_DESC;
-                    } else
-                        if ($key == "owner") {
-                            if ($val == 0) $select_attr[5] = ORDER_BY;
-                            else $select_attr[5] = ORDER_BY_DESC;
-                        } else
-                            if ($key == "mtime") {
-                                if ($val == 0) $select_attr[7] = ORDER_BY;
-                                else $select_attr[7] = ORDER_BY_DESC;
-                            }
+                    if ($val == 0) {
+                        $select_attr[0] = ORDER_BY;
+                    } else {
+                        $select_attr[0] = ORDER_BY_DESC;
+                    }
+                } elseif ($key == "size") {
+                    if ($val == 0) {
+                        $select_attr[4] = ORDER_BY;
+                    } else {
+                        $select_attr[4] = ORDER_BY_DESC;
+                    }
+                } elseif ($key == "owner") {
+                    if ($val == 0) {
+                        $select_attr[5] = ORDER_BY;
+                    } else {
+                        $select_attr[5] = ORDER_BY_DESC;
+                    }
+                } elseif ($key == "mtime") {
+                    if ($val == 0) {
+                        $select_attr[7] = ORDER_BY;
+                    } else {
+                        $select_attr[7] = ORDER_BY_DESC;
+                    }
+                }
             }
         }
 
@@ -712,7 +740,9 @@ class RODSConn
                 "COL_COLL_OWNER_ZONE", "COL_COLL_CREATE_TIME", "COL_COLL_MODIFY_TIME",
                 "COL_COLL_COMMENTS"),
             $cond, array(), 0, 1, false);
-        if ($que_result === false) return false;
+        if ($que_result === false) {
+            return false;
+        }
 
         $stats = new RODSDirStats(
             basename($que_result['COL_COLL_NAME'][0]),
@@ -745,7 +775,9 @@ class RODSConn
                 "COL_D_CREATE_TIME",
                 "COL_D_MODIFY_TIME", "COL_D_COMMENTS"),
             $cond, array(), 0, 1, false);
-        if ($que_result === false) return false;
+        if ($que_result === false) {
+            return false;
+        }
 
         $stats = new RODSFileStats(
             $que_result['COL_DATA_NAME'][0],
@@ -770,10 +802,11 @@ class RODSConn
         $cond = array(new RODSQueryCondition("COL_COLL_NAME", $dir));
         $que_result = $this->genQuery(array("COL_COLL_ID"), $cond);
 
-        if ($que_result === false)
+        if ($que_result === false) {
             return false;
-        else
+        } else {
             return true;
+        }
     }
 
     /**
@@ -795,10 +828,11 @@ class RODSConn
             $que_result = $this->genQuery(array("COL_D_DATA_ID"), $cond);
         }
 
-        if ($que_result === false)
+        if ($que_result === false) {
             return false;
-        else
+        } else {
             return true;
+        }
     }
 
     /**
@@ -826,13 +860,15 @@ class RODSConn
         foreach ($options as $option_key => $option_val) {
             switch ($option_key) {
                 case 'all':
-                    if ($option_val === true)
+                    if ($option_val === true) {
                         $opt_arr[$GLOBALS['PRODS_GENQUE_KEYWD']['ALL_KW']] = '';
+                    }
                     break;
 
                 case 'admin':
-                    if ($option_val === true)
+                    if ($option_val === true) {
                         $opt_arr[$GLOBALS['PRODS_GENQUE_KEYWD']['IRODS_ADMIN_KW']] = '';
+                    }
                     break;
 
                 case 'replNum':
@@ -840,9 +876,9 @@ class RODSConn
                     break;
 
                 case 'backupMode':
-                    if ($option_val === true)
-                        $opt_arr[$GLOBALS['PRODS_GENQUE_KEYWD']
-                        ['BACKUP_RESC_NAME_KW']] = $desc_resc;
+                    if ($option_val === true) {
+                        $opt_arr[$GLOBALS['PRODS_GENQUE_KEYWD']['BACKUP_RESC_NAME_KW']] = $desc_resc;
+                    }
                     break;
 
                 default:
@@ -968,11 +1004,11 @@ class RODSConn
                     "PERR_USER_INPUT_ERROR");
         }
 
-        if ($assum_file_exists === true)
+        if ($assum_file_exists === true) {
             $file_exists = true;
-        else
+        } else {
             $file_exists = $this->fileExists($path, $rescname);
-
+        }
         if (($error_if_exists) && ($file_exists === true)) {
             throw new RODSException("RODSConn::openFileDesc() expect file '$path' dose not exists with mode '$mode', but the file does exists",
                 "PERR_USER_INPUT_ERROR");
@@ -981,22 +1017,51 @@ class RODSConn
 
         if (($create_if_not_exists) && ($file_exists === false)) // create new file
         {
-            $keyValPair_pk = new RP_KeyValPair(2, array("rescName", "dataType"),
-                array("$rescname", "$filetype"));
-            $dataObjInp_pk = new RP_DataObjInp($path, $cmode, $open_flag, 0, -1, 0, 0,
-                $keyValPair_pk);
+            $keyValPair_pk = new RP_KeyValPair(
+                2,
+                array("rescName", "dataType"),
+                array("$rescname", "$filetype")
+            );
+            $dataObjInp_pk = new RP_DataObjInp(
+                $path,
+                $cmode,
+                $open_flag,
+                0,
+                -1,
+                0,
+                0,
+                $keyValPair_pk
+            );
             $api_num = $GLOBALS['PRODS_API_NUMS']['DATA_OBJ_CREATE_AN'];
         } else // open existing file
         {
             // open the file and get descriptor
             if (isset($rescname)) {
-                $keyValPair_pk = new RP_KeyValPair(1, array("rescName"),
-                    array("$rescname"));
-                $dataObjInp_pk = new RP_DataObjInp
-                ($path, 0, $open_flag, 0, -1, 0, 0, $keyValPair_pk);
+                $keyValPair_pk = new RP_KeyValPair(
+                    1,
+                    array("rescName"),
+                    array("$rescname")
+                );
+                $dataObjInp_pk = new RP_DataObjInp(
+                    $path,
+                    0,
+                    $open_flag,
+                    0,
+                    -1,
+                    0,
+                    0,
+                    $keyValPair_pk
+                );
             } else {
-                $dataObjInp_pk = new RP_DataObjInp
-                ($path, 0, $open_flag, 0, -1, 0, 0);
+                $dataObjInp_pk = new RP_DataObjInp(
+                    $path,
+                    0,
+                    $open_flag,
+                    0,
+                    -1,
+                    0,
+                    0
+                );
             }
             $api_num = $GLOBALS['PRODS_API_NUMS']['DATA_OBJ_OPEN_AN'];
         }
@@ -1124,9 +1189,9 @@ class RODSConn
      */
     public function fileWrite($l1desc, $string, $length = NULL)
     {
-        if (!isset($length))
+        if (!isset($length)) {
             $length = strlen($string);
-
+        }
         $dataObjWriteInp_pk = new RP_dataObjWriteInp($l1desc, $length);
         $msg = new RODSMessage("RODS_API_REQ_T", $dataObjWriteInp_pk,
             $GLOBALS['PRODS_API_NUMS']['DATA_OBJ_WRITE_AN'], $string);
@@ -1348,9 +1413,9 @@ class RODSConn
             $remotesvr_packet = new RP_RHostAddr();
         }
 
-        if (!isset($options))
+        if (!isset($options)){
             $options = new RODSKeyValPair();
-
+        }
         $options_packet = $options->makePacket();
 
         $pkt = new RP_ExecMyRuleInp($rule_body, $remotesvr_packet,
@@ -1425,15 +1490,16 @@ class RODSConn
         // contruct select packet (RP_InxIvalPair $selectInp)
         $select_pk = NULL;
         if (count($select) > 0) {
-            if (empty($select_attr))
+            if (empty($select_attr)) {
                 $select_attr = array_fill(0, count($select), 1);
+            }
             $idx = array();
             foreach ($select as $selval) {
-                if (isset($GLOBALS['PRODS_GENQUE_NUMS']["$selval"]))
+                if (isset($GLOBALS['PRODS_GENQUE_NUMS']["$selval"])) {
                     $idx[] = $GLOBALS['PRODS_GENQUE_NUMS']["$selval"];
-                else
-                    trigger_error("genQuery(): select val '$selval' is not support, ignored",
-                        E_USER_WARNING);
+                } else {
+                    trigger_error("genQuery(): select val '$selval' is not support, ignored", E_USER_WARNING);
+                }
             }
 
             $select_pk = new RP_InxIvalPair(count($select), $idx, $select_attr);
@@ -1442,13 +1508,15 @@ class RODSConn
         }
 
         foreach ($condition_kw as &$cond_kw) {
-            if (isset($GLOBALS['PRODS_GENQUE_KEYWD'][$cond_kw->name]))
+            if (isset($GLOBALS['PRODS_GENQUE_KEYWD'][$cond_kw->name])) {
                 $cond_kw->name = $GLOBALS['PRODS_GENQUE_KEYWD'][$cond_kw->name];
+            }
         }
 
         foreach ($condition as &$cond) {
-            if (isset($GLOBALS['PRODS_GENQUE_NUMS'][$cond->name]))
+            if (isset($GLOBALS['PRODS_GENQUE_NUMS'][$cond->name])) {
                 $cond->name = $GLOBALS['PRODS_GENQUE_NUMS'][$cond->name];
+            }
         }
 
         $condInput = new RP_KeyValPair();
@@ -1484,9 +1552,9 @@ class RODSConn
             $attri_name = $GLOBALS['PRODS_GENQUE_NUMS_REV'][$sql_res_pk->attriInx];
             $result_arr["$attri_name"] = $sql_res_pk->value;
         }
-        if ($total_num_rows != -1)
+        if ($total_num_rows != -1) {
             $total_num_rows = $genque_result_pk->totalRowCount;
-
+        }
 
         $more_results = true;
         // if there are more results to be fetched
@@ -1501,9 +1569,10 @@ class RODSConn
                 if (RODSException::rodsErrCodeToAbbr($intInfo) == 'CAT_NO_ROWS_FOUND') {
                     $more_results = false;
                     break;
-                } else
+                } else {
                     throw new RODSException("RODSConn::genQuery has got an error from the server",
                         $GLOBALS['PRODS_ERR_CODES_REV']["$intInfo"]);
+                }
             }
             $genque_result_pk = $msg_resv->getBody();
 
@@ -1514,9 +1583,9 @@ class RODSConn
                     array_merge($result_arr["$attri_name"], $sql_res_pk->value);
             }
         }
-        
+
          // Make sure and close the query if there are any results left.
-    if ($genque_result_pk->continueInx > 0) 
+    if ($genque_result_pk->continueInx > 0)
     {
       $msg->getBody()->continueInx=$genque_result_pk->continueInx;
       $msg->getBody()->maxRows=-1;  // tells the server to close the query
@@ -1556,11 +1625,11 @@ class RODSConn
         $condkw_pk = $condition->packetizeKW();
 
         // determin max number of results per query
-            if (($limit > 0) && ($limit < 500))
-                $max_result_per_query = $limit;
-            else
-                $max_result_per_query = 500;
-
+        if (($limit > 0) && ($limit < 500)) {
+            $max_result_per_query = $limit;
+        } else {
+            $max_result_per_query = 500;
+        }
         $num_fetched_rows = 0;
         $continueInx = 0;
         $results = new RODSGenQueResults();
@@ -1591,10 +1660,10 @@ class RODSConn
             $start = $start + $results->getNumRow();
         } while (($continueInx > 0) &&
             (($results->getNumRow() < $limit) || ($limit < 0)));
-    
+
 
         // Make sure and close the query if there are any results left.
-    if ($continueInx > 0) 
+    if ($continueInx > 0)
     {
       $msg->getBody()->continueInx=$continueInx;
       $msg->getBody()->maxRows=-1;  // tells the server to close the query
@@ -1607,7 +1676,7 @@ class RODSConn
           $GLOBALS['PRODS_ERR_CODES_REV']["$intInfo"]);
       }
     }
-        
+
         return $results;
     }
 }

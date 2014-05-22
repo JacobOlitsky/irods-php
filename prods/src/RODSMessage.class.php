@@ -151,7 +151,7 @@ class RODSMessage
 
         /*} catch (Exception $e) {
           throw new RODSException("RODSMessage::parseMainBodyXML failed! ".
-              "Mal formated XML in RODS message :".
+              "Mal formatted XML in RODS message :".
               $xmlstr,
               "SYS_PACK_INSTRUCT_FORMAT_ERR",$e);
         }

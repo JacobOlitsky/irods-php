@@ -48,7 +48,7 @@ class RODSPacket
         $xml = new SimpleXMLElement($str);
       } catch (Exception $e) {
         throw new RODSException("RODSPacket::fromXML failed. ".
-            "Mal-formated XML: '$str'\n",
+            "Mal-formatted XML: '$str'\n",
             PERR_INTERNAL_ERR);
       }
 

@@ -8,10 +8,11 @@
 
 $errtable_file = dirname(__FILE__) . "/RodsErrorTable.inc.php";
 
-if (is_readable($errtable_file))
+if (is_readable($errtable_file)) {
     require_once($errtable_file);
-else
+} else {
     die("Could not read file $errtable_file <br/>\n");
+}
 
 /**
  * custom exception class for RODS
@@ -26,8 +27,7 @@ class RODSException extends Exception
      * @param string $message err/exception message
      * @param string $code_abbr error code abbreviation
      */
-    public function __construct($message, $code_abbr = "UNKNOWN_PRODS_ERR",
-                                Exception $cause = NULL)
+    public function __construct($message, $code_abbr = "UNKNOWN_PRODS_ERR", Exception $cause = NULL)
     {
         $this->code_abbr = $code_abbr;
         $this->cause = $cause;

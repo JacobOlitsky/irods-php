@@ -10,9 +10,9 @@ define("MAX_NUM_CONN_PER_USER_SERVER", 5);
 /**#@-*/
 
 
-if (!isset($GLOBALS['RODSConnManager']))
+if (!isset($GLOBALS['RODSConnManager'])) {
     $GLOBALS['RODSConnManager'] = new RODSConnManager();
-
+}
 
 class RODSConnManager
 {
@@ -31,9 +31,9 @@ class RODSConnManager
 
         $conn = new RODSConn($account);
         $conn_sig = $conn->getSignature();
-        if (!isset($manager->conn_map[$conn_sig]))
+        if (!isset($manager->conn_map[$conn_sig])) {
             $manager->conn_map[$conn_sig] = array();
-
+        }
         //check if there is any opened connection idle
         foreach ($manager->conn_map[$conn_sig] as &$opened_conn) {
             if ($opened_conn->isIdle()) {
@@ -60,9 +60,11 @@ class RODSConnManager
             "PERR_INTERNAL_ERR");
 
         //if no connection are available, sleep for 100ms and retry
+        /* This is unreachable due to the above exception.
         usleep(100);
         echo "i am sleeping... <br/> \n";
         return RODSConnManager::getConn($account);
+        */
     }
 
     public static function releaseConn(RODSConn $conn)
