@@ -22,105 +22,112 @@ class ProdsFile extends ProdsPath
     /**
      * The class constructor
      */
-    public function __construct(RODSAccount &$account, $path_str,
-                                $verify = false, RODSFileStats $stats = NULL)
-    {
+    public function __construct(
+        RODSAccount &$account,
+        $path_str,
+        $verify = true,
+        RODSFileStats $stats = NULL
+    ) {
         $this->l1desc = -1;
         $this->stats = $stats;
 
         if ($path_str{strlen($path_str) - 1} == '/') {
-            throw new RODSException("Invalid file name '$path_str' ",
-                'PERR_USER_INPUT_PATH_ERROR');
+            throw new RODSException(
+                "Invalid file name '$path_str' ",
+                'PERR_USER_INPUT_PATH_ERROR'
+            );
         }
 
         parent::__construct($account, $path_str);
         if ($verify === true) {
             if ($this->exists() === false) {
-                throw new RODSException("File '$this' does not exist",
-                    'PERR_PATH_DOES_NOT_EXISTS');
+                throw new RODSException(
+                    "File '$this' does not exist",
+                    'PERR_PATH_DOES_NOT_EXISTS'
+                );
             }
         }
     }
-  
-  
- /**
-	* Create a new ProdsFile object from URI string.
-	* @param string $path the URI Sting
-	* @param boolean $verify whether verify if the path exsits
-	* @return a new ProdsDir
-	*/
-  public static function fromURI($path, $verify=false)
-  {
-    if (0!=strncmp($path,"rods://",7))
-      $path="rods://".$path;
-    $url=parse_url($path);
-    
-    $host=isset($url['host'])?$url['host']:''; 
-    $port=isset($url['port'])?$url['port']:'';   
-    
-    $user='';
-    $zone='';
-    $authtype='irods';
-    if (isset($url['user']))
+
+
+    /**
+       * Create a new ProdsFile object from URI string.
+       * @param string $path the URI Sting
+       * @param boolean $verify whether verify if the path exsits
+       * @return a new ProdsDir
+       */
+    public static function fromURI($path, $verify=false)
     {
-      if (strstr($url['user'],".")!==false) {
-        $user_array=@explode(".",$url['user']);
-        if (count($user_array)===3) {
-          $user=$user_array[0];
-          $zone=$user_array[1];
-          $authtype=$user_array[2];
+        if (0 != strncmp($path, "rods://", 7)) {
+            $path = "rods://" . $path;
         }
-        else {
-          $user=$user_array[0];
-          $zone=$user_array[1];
+        $url = parse_url($path);
+        $host = isset($url['host']) ? $url['host'] : '';
+        $port = isset($url['port']) ? $url['port'] : '';
+        $user = '';
+        $zone = '';
+        $authtype = 'irods';
+        if (isset($url['user'])) {
+            if (strstr($url['user'], ".") !== false) {
+                $user_array = @explode(".", $url['user']);
+                if (count($user_array) === 3) {
+                    $user = $user_array[0];
+                    $zone = $user_array[1];
+                    $authtype = $user_array[2];
+                }
+                else {
+                    $user = $user_array[0];
+                    $zone = $user_array[1];
+                }
+            }
+            else {
+                $user = $url['user'];
+            }
         }
-      }
-      else
-        $user=$url['user'];
-    }  
-    
-    $pass=isset($url['pass'])?$url['pass']:'';
-    
-    $account=new RODSAccount($host, $port, $user, $pass, $zone, '', $authtype);
-    
-    $path_str=isset($url['path'])?$url['path']:''; 
-    
-    // treat query and fragment as part of name
-    if (isset($url['query'])&&(strlen($url['query'])>0))
-      $path_str=$path_str.'?'.$url['query'];
-    if (isset($url['fragment'])&&(strlen($url['fragment'])>0))
-      $path_str=$path_str.'#'.$url['fragment'];
-    
-    if (empty($path_str))
-      $path_str='/'; 
-      
-    return (new ProdsFile($account,$path_str,$verify));
-  }  
-  
- /**
-	* Verify if this file exist with server. This function shouldn't be called directly, use {@link exists}
-	*/
-  protected function verify()
-  {
-    $conn = RODSConnManager::getConn($this->account);
-    $this->path_exists= $conn -> fileExists ($this->path_str);
-    RODSConnManager::releaseConn($conn);  
-  }
-  
- /**
-  * get the file stats
-  */
-  public function getStats()
-  {
-    $conn = RODSConnManager::getConn($this->account);
-    $stats=$conn->getFileStats($this->path_str);
-    RODSConnManager::releaseConn($conn); 
-    
-    if ($stats===false) $this->stats=NULL;
-    else $this->stats=$stats;
-    return $this->stats;
-  }
- 
+
+        $pass=isset($url['pass']) ? $url['pass'] : '';
+        $account=new RODSAccount($host, $port, $user, $pass, $zone, '', $authtype);
+        $path_str=isset($url['path']) ? $url['path'] : '';
+
+        // treat query and fragment as part of name
+        if (isset($url['query']) && (strlen($url['query']) > 0)) {
+            $path_str .= "?{$url['query']}";
+        }
+        if (isset($url['fragment']) && (strlen($url['fragment']) > 0)) {
+            $path_str .= "#{$url['fragment']}";
+        }
+        if (empty($path_str)) {
+            $path_str= '/' ;
+        }
+        return (new ProdsFile($account, $path_str, $verify));
+    }
+
+    /**
+       * Verify if this file exist with server. This function shouldn't be called directly, use {@link exists}
+       */
+    protected function verify()
+    {
+        $conn = RODSConnManager::getConn($this->account);
+        $this->path_exists = $conn -> fileExists ($this->path_str);
+        RODSConnManager::releaseConn($conn);
+    }
+
+    /**
+     * get the file stats
+     */
+    public function getStats()
+    {
+        $conn = RODSConnManager::getConn($this->account);
+        $stats=$conn->getFileStats($this->path_str);
+        RODSConnManager::releaseConn($conn);
+        if ($stats === false) {
+            $this->stats = NULL;
+        } else {
+            $this->stats = $stats;
+        }
+        return $this->stats;
+    }
+
     /**
      * Open a file path (string) exists on RODS server.
      *
@@ -138,15 +145,19 @@ class ProdsFile extends ProdsPath
      * @param string $filetype. This parameter only make sense when you want to specify the file type, if file does not exists (create mode). If not specified, it defaults to "generic"
      * @param integer $cmode. This parameter is only used for "createmode". It specifies the file mode on physical storage system (RODS vault), in octal 4 digit format. For instance, 0644 is owner readable/writeable, and nothing else. 0777 is all readable, writable, and excutable. If not specified, and the open flag requirs create mode, it defaults to 0644.
      */
-    public function open($mode, $rescname = NULL,
-                         $assum_file_exists = false, $filetype = 'generic', $cmode = 0644)
-    {
-        if ($this->l1desc >= 0)
+    public function open(
+        $mode,
+        $rescname = NULL,
+        $assum_file_exists = false,
+        $filetype = 'generic',
+        $cmode = 0644
+    ) {
+        if ($this->l1desc >= 0) {
             return;
-
-        if (!empty($rescname))
+        }
+        if (!empty($rescname)) {
             $this->rescname = $rescname;
-
+        }
         $this->conn = RODSConnManager::getConn($this->account);
         $this->l1desc = $this->conn->openFileDesc($this->path_str, $mode,
             $this->postion, $rescname, $assum_file_exists, $filetype, $cmode);
@@ -190,8 +201,7 @@ class ProdsFile extends ProdsPath
     {
         if ($this->l1desc >= 0) {
             while ($this->conn->isIdle() === false) {
-                trigger_error("The connection is not available! sleep for a while and retry...",
-                    E_USER_WARNING);
+                trigger_error("The connection is not available! sleep for a while and retry...", E_USER_WARNING);
                 usleep(50);
             }
             $this->conn->lock();
@@ -211,13 +221,14 @@ class ProdsFile extends ProdsPath
     public function read($length)
     {
         if ($this->l1desc < 0) {
-            throw new RODSException("File '$this' is not opened! l1desc=$this->l1desc",
-                'PERR_USER_INPUT_ERROR');
+            throw new RODSException(
+                "File '$this' is not opened! l1desc={$this->l1desc}",
+                'PERR_USER_INPUT_ERROR'
+            );
         }
 
         while ($this->conn->isIdle() === false) {
-            trigger_error("The connection is not available! sleep for a while and retry...",
-                E_USER_WARNING);
+            trigger_error("The connection is not available! sleep for a while and retry...", E_USER_WARNING);
             usleep(50);
         }
 
@@ -237,13 +248,14 @@ class ProdsFile extends ProdsPath
     public function write($string, $length = NULL)
     {
         if ($this->l1desc < 0) {
-            throw new RODSException("File '$this' is not opened! l1desc=$this->l1desc",
-                'PERR_USER_INPUT_ERROR');
+            throw new RODSException(
+                "File '$this' is not opened! l1desc={$this->l1desc}",
+                'PERR_USER_INPUT_ERROR'
+            );
         }
 
         while ($this->conn->isIdle() === false) {
-            trigger_error("The connection is not available! sleep for a while and retry...",
-                E_USER_WARNING);
+            trigger_error("The connection is not available! sleep for a while and retry...", E_USER_WARNING);
             usleep(50);
         }
 
@@ -265,13 +277,14 @@ class ProdsFile extends ProdsPath
     public function seek($offset, $whence = SEEK_SET)
     {
         if ($this->l1desc < 0) {
-            throw new RODSException("File '$this' is not opened! l1desc=$this->l1desc",
-                'PERR_USER_INPUT_ERROR');
+            throw new RODSException(
+                "File '$this' is not opened! l1desc={$this->l1desc}",
+                'PERR_USER_INPUT_ERROR'
+            );
         }
 
         while ($this->conn->isIdle() === false) {
-            trigger_error("The connection is not available! sleep for a while and retry...",
-                E_USER_WARNING);
+            trigger_error("The connection is not available! sleep for a while and retry...", E_USER_WARNING);
             usleep(50);
         }
 
@@ -288,8 +301,7 @@ class ProdsFile extends ProdsPath
     public function rewind()
     {
         while ($this->conn->isIdle() === false) {
-            trigger_error("The connection is not available! sleep for a while and retry...",
-                E_USER_WARNING);
+            trigger_error("The connection is not available! sleep for a while and retry...", E_USER_WARNING);
             usleep(50);
         }
 
@@ -331,7 +343,6 @@ class ProdsFile extends ProdsPath
         $conn = RODSConnManager::getConn($this->account);
         $bytesWritten = $conn->repl($this->path_str, $desc_resc, $options);
         RODSConnManager::releaseConn($conn);
-
         return $bytesWritten;
     }
 
@@ -355,11 +366,21 @@ class ProdsFile extends ProdsPath
     public function getReplInfo()
     {
         $select = new RODSGenQueSelFlds(
-            array("COL_DATA_REPL_NUM", "COL_D_DATA_CHECKSUM", 'COL_DATA_SIZE',
-                "COL_D_RESC_NAME", "COL_D_RESC_GROUP_NAME",
-                "COL_D_DATA_STATUS", "COL_D_CREATE_TIME",
-                "COL_D_MODIFY_TIME", 'COL_R_TYPE_NAME', 'COL_R_CLASS_NAME',
-                'COL_R_LOC', 'COL_R_FREE_SPACE', 'COL_D_REPL_STATUS')
+            array(
+                'COL_DATA_REPL_NUM',
+                'COL_D_DATA_CHECKSUM',
+                'COL_DATA_SIZE',
+                'COL_D_RESC_NAME',
+                'COL_D_RESC_GROUP_NAME',
+                'COL_D_DATA_STATUS',
+                'COL_D_CREATE_TIME',
+                'COL_D_MODIFY_TIME',
+                'COL_R_TYPE_NAME',
+                'COL_R_CLASS_NAME',
+                'COL_R_LOC',
+                'COL_R_FREE_SPACE',
+                'COL_D_REPL_STATUS'
+            )
         );
         $condition = new RODSGenQueConds(
             array("COL_COLL_NAME", "COL_DATA_NAME"),
@@ -375,24 +396,24 @@ class ProdsFile extends ProdsPath
         for ($i = 0; $i < $que_result->getNumRow(); $i++) {
             $ret_arr_row = array();
             $que_result_val = $que_result->getValues();
-            $ret_arr_row['repl_num'] = $que_result_val['COL_DATA_REPL_NUM'][$i];
-            $ret_arr_row['chk_sum'] = $que_result_val['COL_D_DATA_CHECKSUM'][$i];
-            $ret_arr_row['size'] = $que_result_val['COL_DATA_SIZE'][$i];
-            $ret_arr_row['resc_name'] = $que_result_val['COL_D_RESC_NAME'][$i];
-            $ret_arr_row['resc_grp_name'] = $que_result_val['COL_D_RESC_GROUP_NAME'][$i];
-            $ret_arr_row['data_status'] = $que_result_val['COL_D_DATA_STATUS'][$i];
-            $ret_arr_row['ctime'] = $que_result_val['COL_D_CREATE_TIME'][$i];
-            $ret_arr_row['mtime'] = $que_result_val['COL_D_MODIFY_TIME'][$i];
-            $ret_arr_row['resc_type'] = $que_result_val['COL_R_TYPE_NAME'][$i];
-            $ret_arr_row['resc_class'] = $que_result_val['COL_R_CLASS_NAME'][$i];
-            $ret_arr_row['resc_loc'] = $que_result_val['COL_R_LOC'][$i];
-            $ret_arr_row['resc_freespace'] = $que_result_val['COL_R_FREE_SPACE'][$i];
-            $ret_arr_row['resc_repl_status'] = $que_result_val['COL_D_REPL_STATUS'][$i];
+            $ret_arr_row['repl_num']        = $que_result_val['COL_DATA_REPL_NUM'][$i];
+            $ret_arr_row['chk_sum']         = $que_result_val['COL_D_DATA_CHECKSUM'][$i];
+            $ret_arr_row['size']            = $que_result_val['COL_DATA_SIZE'][$i];
+            $ret_arr_row['resc_name']       = $que_result_val['COL_D_RESC_NAME'][$i];
+            $ret_arr_row['resc_grp_name']   = $que_result_val['COL_D_RESC_GROUP_NAME'][$i];
+            $ret_arr_row['data_status']     = $que_result_val['COL_D_DATA_STATUS'][$i];
+            $ret_arr_row['ctime']           = $que_result_val['COL_D_CREATE_TIME'][$i];
+            $ret_arr_row['mtime']           = $que_result_val['COL_D_MODIFY_TIME'][$i];
+            $ret_arr_row['resc_type']       = $que_result_val['COL_R_TYPE_NAME'][$i];
+            $ret_arr_row['resc_class']      = $que_result_val['COL_R_CLASS_NAME'][$i];
+            $ret_arr_row['resc_loc']        = $que_result_val['COL_R_LOC'][$i];
+            $ret_arr_row['resc_freespace']  = $que_result_val['COL_R_FREE_SPACE'][$i];
+            $ret_arr_row['resc_repl_status']= $que_result_val['COL_D_REPL_STATUS'][$i];
             $ret_arr[] = $ret_arr_row;
         }
         return $ret_arr;
     }
-    
+
         /**
      * Get ACL (users and their rights on a file)
      * @param string $filepath input file path string
@@ -415,10 +436,11 @@ class ProdsFile extends ProdsPath
               array("COL_USER_NAME", "COL_USER_ZONE", "COL_DATA_ACCESS_NAME"),
             $cond, array());
         RODSConnManager::releaseConn($connLocal);
-        if ($que_result === false) return false;
-
-
-        for($i=0; $i < sizeof($que_result['COL_USER_NAME']); $i++) {
+        if ($que_result === false) {
+            return false;
+        }
+        $sizeOfQueueResult = sizeof($que_result['COL_USER_NAME']);
+        for($i=0; $i < $sizeOfQueueResult; $i++) {
             $users[] = (object) array(
                 "COL_USER_NAME" => $que_result['COL_USER_NAME'][$i],
                 "COL_USER_ZONE" => $que_result['COL_USER_ZONE'][$i],
@@ -427,4 +449,4 @@ class ProdsFile extends ProdsPath
         }
         return $users;
     }
-}   
+}
