@@ -47,18 +47,20 @@ class RODSException extends Exception
 
     public static function rodsErrCodeToAbbr($code)
     {
-        if (isset($GLOBALS['PRODS_ERR_CODES_REV']["$code"]))
+        if (isset($GLOBALS['PRODS_ERR_CODES_REV']["$code"])) {
             return $GLOBALS['PRODS_ERR_CODES_REV']["$code"];
-        else
+        } else {
             return null;
+        }
     }
 
     public static function rodsErrAbbrToCode($codeabbr)
     {
-        if (isset($GLOBALS['PRODS_ERR_CODES']["$codeabbr"]))
+        if (isset($GLOBALS['PRODS_ERR_CODES']["$codeabbr"])) {
             return $GLOBALS['PRODS_ERR_CODES']["$codeabbr"];
-        else
+        } else {
             return null;
+        }
     }
 
     public function getStackTrace()

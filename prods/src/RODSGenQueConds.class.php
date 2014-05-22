@@ -63,8 +63,9 @@ class RODSGenQueConds
             foreach ($OR_ops_vals as $op_val) {
                 $or_op = $op_val['op'];
                 $or_val = $op_val['val'];
-                if (empty($or_op) || empty($or_val))
+                if (empty($or_op) || empty($or_val)) {
                     continue;
+                }
                 $value = $value . " || $or_op '$or_val'";
             }
             $this->cond['values'][] = $value;
@@ -76,8 +77,9 @@ class RODSGenQueConds
                 foreach ($OR_ops_vals as $op_val) {
                     $or_op = $op_val['op'];
                     $or_val = $op_val['val'];
-                    if (empty($or_op) || empty($or_val))
+                    if (empty($or_op) || empty($or_val)) {
                         continue;
+                    }
                     $value = $value . " || $or_op '$or_val'";
                 }
                 $this->cond_kw['values'][] = $value;

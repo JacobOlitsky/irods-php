@@ -74,10 +74,11 @@ class RODSGenQueSelFlds
         $newattr = RODSGenQueSelFlds::attr2GenQueNumber($attr);
         for ($i = 0; $i < count($this->names); $i++) {
             if ($this->names[$i] == $name) {
-                if ($this->attrs[$i] == 1)
+                if ($this->attrs[$i] == 1) {
                     $this->attrs[$i] = $newattr;
-                else
+                } else {
                     $this->attrs[$i] = $newattr | $this->attrs[$i];
+                }
                 return;
             }
         }
@@ -97,7 +98,9 @@ class RODSGenQueSelFlds
      */
     public static function attr2GenQueNumber($attr)
     {
-        if (empty($attr)) return 1;
+        if (empty($attr)) {
+            return 1;
+        }
         $retval = 1;
         switch ($attr) {
             case 'order_by_asc':

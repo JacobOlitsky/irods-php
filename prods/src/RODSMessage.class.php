@@ -53,9 +53,9 @@ class RODSMessage
 
     public function pack()
     {
-        if (isset($this->msg))
+        if (isset($this->msg)) {
             $this->msg_xml = $this->msg->toXML();
-
+        }
         $this->header = new RP_MsgHeader($this->typestr, strlen($this->msg_xml),
             strlen($this->errstr), strlen($this->binstr), $this->intinfo);
         $header_xml = $this->header->toXML();

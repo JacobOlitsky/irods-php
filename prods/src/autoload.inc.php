@@ -12,8 +12,9 @@ function __autoload($className)
 {
     $folder = classFolder($className);
 
-    if ($folder)
+    if ($folder) {
         require_once($folder . $className . ".class.php");
+    }
 }
 
 /**
@@ -27,16 +28,18 @@ function classFolder($className, $sub = "/")
 {
     $dir = dir(CLASS_DIR . $sub);
 
-    if (file_exists(CLASS_DIR . $sub . $className . ".class.php"))
+    if (file_exists(CLASS_DIR . $sub . $className . ".class.php")) {
         return CLASS_DIR . $sub;
+    }
 
     while (false !== ($folder = $dir->read())) {
         if ($folder != "." && $folder != "..") {
             if (is_dir(CLASS_DIR . $sub . $folder)) {
                 $subFolder = classFolder($className, $sub . $folder . "/");
 
-                if ($subFolder)
+                if ($subFolder) {
                     return $subFolder;
+                }
             }
         }
     }

@@ -17,14 +17,14 @@ class ProdsStreamer
 	* @access private
 	*/
   private $position;
-  
+
   /**
 	 * Name of the directory/collection specified in the URI to opendir().
 	 *
 	 * @access private
 	 */
 	private $dir;
-	
+
 	/**
 	 * Name of the file specified in the URI to fopen().
 	 *
@@ -32,7 +32,7 @@ class ProdsStreamer
 	 */
 	private $file;
 
-	
+
 	/**
 	 * url_stat() handler.
 	 *
@@ -48,11 +48,11 @@ class ProdsStreamer
                   if (!$stats) {
                     $stats = $this->stat_dir($conn, $file->path_str);
                   }
-                  
+
                   RODSConnManager::releaseConn($conn);
-                  
+
                   return $stats;
-                  
+
 		} catch (Exception $e) {
                   trigger_error("Got an exception:$e", E_USER_WARNING);
                   return false;
@@ -65,78 +65,79 @@ class ProdsStreamer
          * @return mixed
          */
         private function stat_dir($conn, $path_str) {
-                 try {
-                   $irods_stats = $conn->getDirStats($path_str);
-                   if (!$irods_stats)
-                     return false;
-                   $stats = array();
-                   $stats[0] = $stats['dev'] = 0;
-                   $stats[1] = $stats['ino'] = 0;
-                   $stats[2] = $stats['mode'] = octdec('040755');
-                   $stats[3] = $stats['nlink'] = 1;
-                   $stats[4] = $stats['uid'] = 0;
-                   $stats[5] = $stats['gid'] = 0;
-                   $stats[6] = $stats['rdev'] = -1;
-                   $stats[7] = $stats['size'] = 0;
-                   $stats[8] = $stats['atime'] = time();
-                   $stats[9] = $stats['mtime'] = $irods_stats->mtime;
-                   $stats[10] = $stats['ctime'] = $irods_stats->ctime;
-                   $stats[11] = $stats['blksize'] = -1;
-                   $stats[12] = $stats['blocks'] = -1;
-                   return $stats;
-                 } catch (Exception $e) {
-                   trigger_error("Got an exception: $e", E_USER_WARNING);
-                   return false;
-                 }
+            try {
+                $irods_stats = $conn->getDirStats($path_str);
+                if (!$irods_stats) {
+                    return false;
+                }
+                $stats = array();
+                $stats[0]  = $stats['dev'] = 0;
+                $stats[1]  = $stats['ino'] = 0;
+                $stats[2]  = $stats['mode'] = octdec('040755');
+                $stats[3]  = $stats['nlink'] = 1;
+                $stats[4]  = $stats['uid'] = 0;
+                $stats[5]  = $stats['gid'] = 0;
+                $stats[6]  = $stats['rdev'] = -1;
+                $stats[7]  = $stats['size'] = 0;
+                $stats[8]  = $stats['atime'] = time();
+                $stats[9]  = $stats['mtime'] = $irods_stats->mtime;
+                $stats[10] = $stats['ctime'] = $irods_stats->ctime;
+                $stats[11] = $stats['blksize'] = -1;
+                $stats[12] = $stats['blocks'] = -1;
+                return $stats;
+            } catch (Exception $e) {
+                trigger_error("Got an exception: $e", E_USER_WARNING);
+                return false;
+            }
         }
-                 
+
         /**
          * @param $conn
          * @param $file
          * @return mixed
          */
         private function stat_file($conn, $path_str) {
-                 try {
-                   $irods_stats = $conn->getFileStats($path_str);
-                   if (!$irods_stats)
-                     return false;
-                   $stats = array();
-                   $stats[0] = $stats['dev'] = 0;
-                   $stats[1] = $stats['ino'] = 0;
-                   $stats[2] = $stats['mode'] = octdec('100644');
-                   $stats[3] = $stats['nlink'] = 1;
-                   $stats[4] = $stats['uid'] = 0;
-                   $stats[5] = $stats['gid'] = 0;
-                   $stats[6] = $stats['rdev'] = -1;
-                   $stats[7] = $stats['size'] = $irods_stats->size;
-                   $stats[8] = $stats['atime'] = time();
-                   $stats[9] = $stats['mtime'] = $irods_stats->mtime;
-                   $stats[10] = $stats['ctime'] = $irods_stats->ctime;
-                   $stats[11] = $stats['blksize'] = -1;
-                   $stats[12] = $stats['blocks'] = -1;
-                   return $stats;
-                 } catch (Exception $e) {
-                   trigger_error("Got an exception: $e", E_USER_WARNING);
-                   return false;
-                 }
+            try {
+                $irods_stats = $conn->getFileStats($path_str);
+                if (!$irods_stats) {
+                    return false;
+                }
+                $stats = array();
+                $stats[0]  = $stats['dev'] = 0;
+                $stats[1]  = $stats['ino'] = 0;
+                $stats[2]  = $stats['mode'] = octdec('100644');
+                $stats[3]  = $stats['nlink'] = 1;
+                $stats[4]  = $stats['uid'] = 0;
+                $stats[5]  = $stats['gid'] = 0;
+                $stats[6]  = $stats['rdev'] = -1;
+                $stats[7]  = $stats['size'] = $irods_stats->size;
+                $stats[8]  = $stats['atime'] = time();
+                $stats[9]  = $stats['mtime'] = $irods_stats->mtime;
+                $stats[10] = $stats['ctime'] = $irods_stats->ctime;
+                $stats[11] = $stats['blksize'] = -1;
+                $stats[12] = $stats['blocks'] = -1;
+                return $stats;
+            } catch (Exception $e) {
+                trigger_error("Got an exception: $e", E_USER_WARNING);
+                return false;
+            }
         }
-                 
+
 	/**
 	 * mkdir() handler.
 	 *
 	 * @access private
 	 */
 	function mkdir ($url, $mode, $options) {
-		try {
-                  $file=ProdsDir::fromURI($url);
-                  $conn = RODSConnManager::getConn($file->account);
-                  $conn->mkdir($file->path_str);
-                  
-                  RODSConnManager::releaseConn($conn);
-                  return true;
+        try {
+            $file=ProdsDir::fromURI($url);
+            $conn = RODSConnManager::getConn($file->account);
+            $conn->mkdir($file->path_str);
+            RODSConnManager::releaseConn($conn);
+            return true;
 		} catch (Exception $e) {
-                  trigger_error("Got an exception:$e", E_USER_WARNING);
-                  return false;
+            trigger_error("Got an exception:$e", E_USER_WARNING);
+            return false;
 		}
 	}
 
@@ -151,7 +152,6 @@ class ProdsStreamer
 			$file=ProdsDir::fromURI($url);
 			$conn = RODSConnManager::getConn($file->account);
 			$conn->rmdir($file->path_str);
-
 			RODSConnManager::releaseConn($conn);
 			return true;
 		} catch (Exception $e) {
@@ -167,19 +167,19 @@ class ProdsStreamer
 	 */
 	function unlink ($url) {
 		try {
-                  $file=ProdsDir::fromURI($url);
-                  $conn = RODSConnManager::getConn($file->account);
-                  if (is_dir($url)) {
-                    $conn->rmdir($file->path_str, true, true);
-                  } else {
-                    $conn->fileUnlink($file->path_str, NULL, true);
-                  }
-                  
-                  RODSConnManager::releaseConn($conn);
-                  return true;
+            $file=ProdsDir::fromURI($url);
+            $conn = RODSConnManager::getConn($file->account);
+            if (is_dir($url)) {
+              $conn->rmdir($file->path_str, true, true);
+            } else {
+              $conn->fileUnlink($file->path_str, NULL, true);
+            }
+
+            RODSConnManager::releaseConn($conn);
+            return true;
 		} catch (Exception $e) {
-                  trigger_error("Got an exception:$e", E_USER_WARNING);
-                  return false;
+            trigger_error("Got an exception:$e", E_USER_WARNING);
+            return false;
 		}
 	}
 
@@ -188,39 +188,37 @@ class ProdsStreamer
 	 *
 	 * @access private
 	 */
-        function rename ($url_from, $url_to) {
-                try {
-                  $file_from=ProdsDir::fromURI($url_from);
-                  $file_to=ProdsDir::fromURI($url_to);
-                  $conn = RODSConnManager::getConn($file_from->account);
-
-                  if (is_dir($url_from)) {
-                    $conn->rename($file_from->path_str, $file_to->path_str, 0);
-                  } else {
-                    $conn->rename($file_from->path_str, $file_to->path_str, 1);
-                  }
-
-                  RODSConnManager::releaseConn($conn);
-                  return true;
-                } catch (Exception $e) {
-                  trigger_error("Got an exception:$e", E_USER_WARNING);
-                  return false;
-                }
+    function rename ($url_from, $url_to) {
+        try {
+            $file_from=ProdsDir::fromURI($url_from);
+            $file_to=ProdsDir::fromURI($url_to);
+            $conn = RODSConnManager::getConn($file_from->account);
+            if (is_dir($url_from)) {
+                $conn->rename($file_from->path_str, $file_to->path_str, 0);
+            } else {
+                $conn->rename($file_from->path_str, $file_to->path_str, 1);
+            }
+            RODSConnManager::releaseConn($conn);
+            return true;
+        } catch (Exception $e) {
+            trigger_error("Got an exception:$e", E_USER_WARNING);
+            return false;
         }
+    }
 
 	/**
 	 * opendir() handler.
 	 *
 	 * @access private
 	 */
-	public function dir_opendir ($path, $options) 
+	public function dir_opendir ($path, $options)
 	{
 		try {
-		  $this->dir=ProdsDir::fromURI($path,true);
-		  return true;
+            $this->dir=ProdsDir::fromURI($path,true);
+            return true;
 		} catch (Exception $e) {
-		  trigger_error("Got an exception:$e", E_USER_WARNING);
-		  return false;
+            trigger_error("Got an exception:$e", E_USER_WARNING);
+            return false;
 		}
 	}
 
@@ -233,7 +231,9 @@ class ProdsStreamer
     {
         try {
             $child = $this->dir->getNextChild();
-            if ($child === false) return false;
+            if ($child === false) {
+                return false;
+            }
             return $child->getName();
         } catch (Exception $e) {
             trigger_error("Got an exception:$e", E_USER_WARNING);
@@ -251,13 +251,14 @@ class ProdsStreamer
 			return false;
 		}
 		try {
-  		$ret = $this->file->read($count);
-  		$this->position=$this->file->tell();
-  		return $ret;
-  	} catch (Exception $e) {
-		  trigger_error("Got an exception:$e", E_USER_WARNING);
-		  return false;
-		}	
+            $ret = $this->file->read($count);
+            $this->position=$this->file->tell();
+            return $ret;
+        }
+        catch (Exception $e) {
+            trigger_error("Got an exception:$e", E_USER_WARNING);
+            return false;
+		}
 	}
 
 	/**
@@ -270,13 +271,14 @@ class ProdsStreamer
 			return false;
 		}
 		try {
-  		$ret = $this->file->write($data);
-  		$this->position=$this->file->tell();
-  		return $ret;
-  	} catch (Exception $e) {
-		  trigger_error("Got an exception:$e", E_USER_WARNING);
-		  return false;
-		}	
+            $ret = $this->file->write($data);
+            $this->position=$this->file->tell();
+            return $ret;
+        }
+        catch (Exception $e) {
+            trigger_error("Got an exception:$e", E_USER_WARNING);
+            return false;
+		}
 	}
     /**
      * rewinddir() handler.
@@ -319,9 +321,10 @@ class ProdsStreamer
     {
 
         // get rid of tailing 'b', if any.
-        if (($mode{strlen($mode) - 1} == 'b') && (strlen($mode) > 1))
+        if (($mode{strlen($mode) - 1} == 'b') && (strlen($mode) > 1)) {
             $mode = substr($mode, 0, strlen($mode) - 1);
-         try {
+        }
+        try {
             $this->file = ProdsFile::fromURI($path);
             $this->file->open($mode);
             return true;
@@ -337,29 +340,33 @@ class ProdsStreamer
 	 * @access private
 	 */
 	function stream_stat () {
-	  
-	  try {
-	    $stats=$this->file->getStats();
-	    return array (
-  			-1, -1, -1, -1, -1, -1, $stats->size, time (), $stats->mtime, $stats->ctime, -1, -1,
-  			'dev' => -1,
-  			'ino' => -1,
-  			'mode' => -1,
-  			'nlink' => -1,
-  			'uid' => -1,
-  			'gid' => -1,
-  			'rdev' => -1,
-  			'size' => $stats->size,
-  			'atime' => time (),
-  			'mtime' => $stats->mtime,
-  			'ctime' => $stats->ctime,
-  			'blksize' => -1,
-  			'blocks' => -1,
-  		);
-	  } catch (Exception $e) {
-		  trigger_error("Got an exception:$e", E_USER_WARNING);
-		  return false;
-		} 
+        try {
+            $stats=$this->file->getStats();
+            return array (
+                -1, -1, -1, -1, -1, -1,
+                $stats->size,
+                time (),
+                $stats->mtime,
+                $stats->ctime,
+                -1, -1,
+                'dev' => -1,
+                'ino' => -1,
+                'mode' => -1,
+                'nlink' => -1,
+                'uid' => -1,
+                'gid' => -1,
+                'rdev' => -1,
+                'size' => $stats->size,
+                'atime' => time (),
+                'mtime' => $stats->mtime,
+                'ctime' => $stats->ctime,
+                'blksize' => -1,
+                'blocks' => -1,
+            );
+        } catch (Exception $e) {
+            trigger_error("Got an exception:$e", E_USER_WARNING);
+            return false;
+		}
 	}
 
 	/**
@@ -427,7 +434,7 @@ class ProdsStreamer
         return true;
     }
 }
-  
+
 stream_wrapper_register('rods', 'ProdsStreamer')
     or die ('Failed to register protocol:rods');
 stream_wrapper_register('rods+ticket', 'ProdsStreamer')

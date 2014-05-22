@@ -33,9 +33,9 @@ class ProdsQuery
         $results = $conn->query($select, $condition);
         RODSConnManager::releaseConn($conn);
 
-        if ($results->getNumRow() < 1)
+        if ($results->getNumRow() < 1) {
             return array();
-        else {
+        } else {
             $values = $results->getValues();
             return $values['COL_META_DATA_ATTR_NAME'];
         }
@@ -55,9 +55,9 @@ class ProdsQuery
         $results = $conn->query($select, $condition);
         RODSConnManager::releaseConn($conn);
 
-        if ($results->getNumRow() < 1)
+        if ($results->getNumRow() < 1) {
             return array();
-        else {
+        } else {
             $values = $results->getValues();
             return $values['COL_META_COLL_ATTR_NAME'];
         }
@@ -70,12 +70,20 @@ class ProdsQuery
     public function getResources()
     {
         // set selected value
-        $flds = array("COL_R_RESC_ID" => NULL, "COL_R_RESC_NAME" => NULL,
-            "COL_R_ZONE_NAME" => NULL, "COL_R_TYPE_NAME" => NULL,
-            "COL_R_CLASS_NAME" => NULL, "COL_R_LOC" => NULL,
-            "COL_R_VAULT_PATH" => NULL, "COL_R_FREE_SPACE" => NULL,
-            "COL_R_RESC_INFO" => NULL, "COL_R_RESC_COMMENT" => NULL,
-            "COL_R_CREATE_TIME" => NULL, "COL_R_MODIFY_TIME" => NULL);
+        $flds = array(
+            "COL_R_RESC_ID" => NULL,
+            "COL_R_RESC_NAME" => NULL,
+            "COL_R_ZONE_NAME" => NULL,
+            "COL_R_TYPE_NAME" => NULL,
+            "COL_R_CLASS_NAME" => NULL,
+            "COL_R_LOC" => NULL,
+            "COL_R_VAULT_PATH" => NULL,
+            "COL_R_FREE_SPACE" => NULL,
+            "COL_R_RESC_INFO" => NULL,
+            "COL_R_RESC_COMMENT" => NULL,
+            "COL_R_CREATE_TIME" => NULL,
+            "COL_R_MODIFY_TIME" => NULL
+        );
         $select = new RODSGenQueSelFlds(array_keys($flds), array_values($flds));
         $condition = new RODSGenQueConds();
         $conn = RODSConnManager::getConn($this->account);
@@ -100,6 +108,5 @@ class ProdsQuery
             $retval[] = $retval_row;
         }
         return $retval;
-
     }
 }

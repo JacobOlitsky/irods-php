@@ -14,24 +14,29 @@ $value_pairs = array();
 
 $lines = explode("\n", file_get_contents($capi_genque_KeyWd_file));
 foreach ($lines as $line) {
-    if (strlen($line) < 8) continue;
+    if (strlen($line) < 8) {
+        continue;
+    }
     if (substr($line, 0, 7) == '#define') {
         $rest = trim(substr($line, 7));
         $tokens = preg_split("/\s+/", $rest);
-        if (count($tokens) < 2)
+        if (count($tokens) < 2) {
             continue;
+        }
         $val1 = NULL;
         $val2 = NULL;
 
         foreach ($tokens as $token) {
 
             if (strlen($token) > 1) {
-                if (empty($val1)) $val1 = trim($token);
-                else {
+                if (empty($val1)) {
+                    $val1 = trim($token);
+                } else {
 
                     if (($token{0} == '"') /*&&($token{strlen($token)-1}=='"')*/) {
-                        if (empty($val2))
+                        if (empty($val2)) {
                             $val2 = trim($token);
+                        }
                     }
                 }
             }
@@ -42,8 +47,9 @@ foreach ($lines as $line) {
     }
 }
 foreach ($new_genque_keywds as $new_code_pair) {
-    if ((!is_array($new_code_pair)) || (count($new_code_pair) != 2))
+    if ((!is_array($new_code_pair)) || (count($new_code_pair) != 2)) {
         die("unexpected new_code_pair:$new_code_pair\n");
+    }
     array_push($value_pairs, $new_code_pair);
 }
 
