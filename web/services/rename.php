@@ -13,7 +13,7 @@ if (!isset($_REQUEST['batch']))
 $rename_batch=json_decode(urldecode($_REQUEST['batch']),true);
 if (!is_array($rename_batch))
 {
-  $response=array('success'=> false,'errmsg'=>"Mal-formated rename batch");
+  $response=array('success'=> false,'errmsg'=>"Mal-formatted rename batch");
   echo json_encode($response);
   exit(0);
 }
